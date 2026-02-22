@@ -62,7 +62,7 @@ const IncidentLogger: React.FC<IncidentLoggerProps> = ({ darkMode, user }) => {
     );
 
     // Load existing incidents from localStorage
-    const savedIncidents = localStorage.getItem('caterpillar-incidents');
+    const savedIncidents = localStorage.getItem('checkmate-incidents');
     if (savedIncidents) {
       try {
         setIncidents(JSON.parse(savedIncidents));
@@ -199,7 +199,7 @@ const IncidentLogger: React.FC<IncidentLoggerProps> = ({ darkMode, user }) => {
 
     const updatedIncidents = [newIncident, ...incidents];
     setIncidents(updatedIncidents);
-    localStorage.setItem('caterpillar-incidents', JSON.stringify(updatedIncidents));
+    localStorage.setItem('checkmate-incidents', JSON.stringify(updatedIncidents));
 
     // Reset form
     setCurrentIncident({
@@ -216,7 +216,7 @@ const IncidentLogger: React.FC<IncidentLoggerProps> = ({ darkMode, user }) => {
   const deleteIncident = (id: string) => {
     const updatedIncidents = incidents.filter(incident => incident.id !== id);
     setIncidents(updatedIncidents);
-    localStorage.setItem('caterpillar-incidents', JSON.stringify(updatedIncidents));
+    localStorage.setItem('checkmate-incidents', JSON.stringify(updatedIncidents));
   };
 
   const getSeverityColor = (severity: string) => {
@@ -247,7 +247,7 @@ const IncidentLogger: React.FC<IncidentLoggerProps> = ({ darkMode, user }) => {
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setShowSimpleForm(true)}
-            className="flex items-center space-x-2 px-4 py-2 caterpillar-yellow text-black rounded-lg hover:bg-yellow-600 transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 checkmate-yellow text-black rounded-lg hover:bg-yellow-600 transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span className="font-medium">New Report</span>
@@ -396,7 +396,7 @@ const IncidentLogger: React.FC<IncidentLoggerProps> = ({ darkMode, user }) => {
                   </button>
                   <button
                     onClick={saveIncident}
-                    className="px-4 py-2 caterpillar-yellow text-black rounded-lg hover:bg-yellow-600 transition-colors font-semibold"
+                    className="px-4 py-2 checkmate-yellow text-black rounded-lg hover:bg-yellow-600 transition-colors font-semibold"
                   >
                     Submit Report
                   </button>

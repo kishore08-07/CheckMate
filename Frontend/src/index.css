@@ -16,15 +16,15 @@ body {
   box-sizing: border-box;
 }
 
-.caterpillar-yellow {
+.checkmate-yellow {
   background-color: #FFD700;
 }
 
-.caterpillar-yellow-text {
+.checkmate-yellow-text {
   color: #FFD700;
 }
 
-.caterpillar-yellow-border {
+.checkmate-yellow-border {
   border-color: #FFD700;
 }
 
@@ -212,7 +212,7 @@ textarea:focus {
 
 /* Enhanced button styles */
 .btn-primary {
-  @apply caterpillar-yellow text-black font-medium py-2 px-4 rounded-lg transition-all duration-200 hover:bg-yellow-600 hover:shadow-lg active:scale-95;
+  @apply checkmate-yellow text-black font-medium py-2 px-4 rounded-lg transition-all duration-200 hover:bg-yellow-600 hover:shadow-lg active:scale-95;
 }
 
 .btn-secondary {

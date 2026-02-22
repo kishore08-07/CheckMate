@@ -62,7 +62,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, darkMode }) => {
   const simulateRFIDScan = () => {
     setIsScanning(true);
     setLoginStatus('scanning');
-    // The real scan will POST to /rfid/verify and backend will emit rfid_auth_result
+
+    // Bypass RFID auth for testing
+    setTimeout(() => {
+      setLoginStatus('success');
+      onLogin({ rfid: 'TEST-RFID-123', vehicle: '004B12EFE56C' });
+    }, 500);
   };
 
   // Manual input for testing (optionally POST to /rfid/verify)
@@ -83,26 +88,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, darkMode }) => {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center ${
-      darkMode ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
-      <div ref={loginRef} className={`max-w-md w-full mx-4 p-8 rounded-2xl shadow-2xl border ${
-        darkMode 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-200'
+    <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gray-900' : 'bg-gray-50'
       }`}>
+      <div ref={loginRef} className={`max-w-md w-full mx-4 p-8 rounded-2xl shadow-2xl border ${darkMode
+          ? 'bg-gray-800 border-gray-700'
+          : 'bg-white border-gray-200'
+        }`}>
         <div className="text-center mb-8">
-          <div className="w-16 h-16 caterpillar-yellow rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="w-16 h-16 checkmate-yellow rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Shield className="w-8 h-8 text-black" />
           </div>
-          <h1 className={`text-2xl font-bold mb-2 ${
-            darkMode ? 'text-white' : 'text-gray-900'
-          }`}>
-            Caterpillar Access
+          <h1 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'
+            }`}>
+            Checkmate - Smart Operator Assistant
           </h1>
-          <p className={`text-sm ${
-            darkMode ? 'text-gray-400' : 'text-gray-600'
-          }`}>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
             Scan your RFID card or enter credentials
           </p>
         </div>
@@ -115,25 +116,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, darkMode }) => {
 
         <div className="space-y-6">
           {/* RFID Scanner */}
-          <div ref={cardRef} className={`p-6 rounded-xl border-2 border-dashed transition-all ${
-            isScanning 
-              ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' 
-              : darkMode 
-                ? 'border-gray-600 bg-gray-700/50' 
+          <div ref={cardRef} className={`p-6 rounded-xl border-2 border-dashed transition-all ${isScanning
+              ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
+              : darkMode
+                ? 'border-gray-600 bg-gray-700/50'
                 : 'border-gray-300 bg-gray-50'
-          }`}>
+            }`}>
             <div className="text-center">
-              <CreditCard className={`w-12 h-12 mx-auto mb-3 ${
-                isScanning ? 'text-yellow-600' : darkMode ? 'text-gray-400' : 'text-gray-500'
-              }`} />
+              <CreditCard className={`w-12 h-12 mx-auto mb-3 ${isScanning ? 'text-yellow-600' : darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`} />
               <button
                 onClick={simulateRFIDScan}
                 disabled={isScanning}
-                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-                  isScanning
+                className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${isScanning
                     ? 'bg-yellow-400 text-black cursor-not-allowed'
-                    : 'caterpillar-yellow text-black hover:bg-yellow-600'
-                }`}
+                    : 'checkmate-yellow text-black hover:bg-yellow-600'
+                  }`}
               >
                 {isScanning ? (
                   <div className="flex items-center justify-center space-x-2">

@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { 
-  Settings, 
-  Car, 
-  CheckCircle, 
-  Clock, 
-  Wrench, 
-  MapPin, 
+import {
+  Settings,
+  Car,
+  CheckCircle,
+  Clock,
+  Wrench,
+  MapPin,
   AlertTriangle,
   BookOpen,
   Award,
@@ -24,12 +24,14 @@ import {
   Activity,
   ClipboardList,
   Shield,
-  X
+  X,
+  Eye
 } from 'lucide-react';
 
 import LogsMenu from './LogsMenu';
 import IncidentLogger from './IncidentLogger';
 import NotificationSystem from './NotificationSystem';
+import DrowsyDetector from './DrowsyDetector';
 import axios from 'axios';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -86,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [selectedLearningModule, setSelectedLearningModule] = useState<LearningModule | null>(null);
   const [seatBeltOn, setSeatBeltOn] = useState(false);
   const seatbeltVoiceRef = useRef<HTMLAudioElement | null>(null);
-  
+
   const dashboardRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement[]>([]);
@@ -97,6 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [obstacleData, setObstacleData] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [engineData, setEngineData] = useState<any>(null);
+  const [drowsinessData, setDrowsinessData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [taskLoading, setTaskLoading] = useState(false);
 
@@ -105,7 +108,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     try {
       setLoading(true);
       const vehicleId = user.vehicle_id || '004B12EFE56C'; // Use from user or default
-      
+
       // Fetch task data
       try {
         const taskRes = await axios.get('http://localhost:3000/latest/task', {
@@ -166,6 +169,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         setLogs([]);
       }
 
+      // Fetch drowsiness data
+      try {
+        const drowsinessRes = await axios.get('http://localhost:3000/latest/drowsiness', {
+          params: { vehicle_id: vehicleId }
+        });
+        setDrowsinessData(drowsinessRes.data.drowsiness_event);
+      } catch (err) {
+        console.log('No drowsiness data found');
+        setDrowsinessData(null);
+      }
+
     } catch (err) {
       console.error('Failed to fetch data:', err);
     } finally {
@@ -208,15 +222,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       autoConnect: true,
       query: { vehicle_id: user.vehicle_id || '004B12EFE56C' }
     });
-    
+
     socket.on('connect', () => {
       console.log('🚀 WebSocket connected - Ultra-fast real-time updates active');
     });
-    
+
     socket.on('disconnect', () => {
       console.log('WebSocket disconnected');
     });
-    
+
     // Ultra-fast state updates with requestAnimationFrame
     socket.on('task_update', (data) => {
       requestAnimationFrame(() => {
@@ -225,7 +239,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       });
       console.log('⚡⚡⚡ Instant task update:', data);
     });
-    
+
     socket.on('speed_update', (data) => {
       requestAnimationFrame(() => {
         setSpeedData(data.speed_data);
@@ -233,7 +247,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       });
       console.log('⚡⚡⚡ Instant speed update:', data);
     });
-    
+
     socket.on('obstacle_update', (data) => {
       requestAnimationFrame(() => {
         setObstacleData(data.obstacle_data);
@@ -241,7 +255,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       });
       console.log('⚡⚡⚡ Instant obstacle update:', data);
     });
-    
+
+    socket.on('drowsiness_update', (data) => {
+      requestAnimationFrame(() => {
+        setDrowsinessData(data.drowsiness_event);
+        setLogs(data.logs);
+      });
+      console.log('⚡⚡⚡ Instant drowsiness update:', data);
+    });
+
     socket.on('operatorlog_update', (data) => {
       requestAnimationFrame(() => {
         if (data.event === 'engine_data' && data.log?.engine_data) {
@@ -253,7 +275,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         }
       });
     });
-    
+
     return () => {
       socket.disconnect();
     };
@@ -443,49 +465,49 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const quizQuestions: QuizQuestion[] = [
     {
       id: '1',
-      question: 'What is the maximum operating temperature for a Caterpillar engine?',
+      question: 'What is the maximum operating temperature for a heavy equipment engine?',
       options: ['85°C', '95°C', '105°C', '115°C'],
       correctAnswer: 2
     },
     {
       id: '2',
-      question: 'How often should you check hydraulic fluid levels in a Caterpillar excavator?',
+      question: 'How often should you check hydraulic fluid levels in a heavy equipment excavator?',
       options: ['Once a week', 'Daily', 'Every 8 hours', 'Monthly'],
       correctAnswer: 2
     },
     {
       id: '3',
-      question: 'What should you do before starting any maintenance work on a Caterpillar machine?',
+      question: 'What should you do before starting any maintenance work on a heavy equipment machine?',
       options: ['Check the weather', 'Turn off the engine and engage safety locks', 'Call your supervisor', 'Clean the machine'],
       correctAnswer: 1
     },
     {
       id: '4',
-      question: 'What is the recommended idle time for a Caterpillar engine to warm up?',
+      question: 'What is the recommended idle time for a heavy equipment engine to warm up?',
       options: ['1-2 minutes', '3-5 minutes', '5-10 minutes', '15 minutes'],
       correctAnswer: 1
     },
     {
       id: '5',
-      question: 'Which component is most critical for safe operation of a Caterpillar excavator?',
+      question: 'Which component is most critical for safe operation of a heavy equipment excavator?',
       options: ['Radio system', 'Air conditioning', 'Undercarriage and tracks', 'Paint color'],
       correctAnswer: 2
     },
     {
       id: '6',
-      question: 'What is the primary purpose of the hydraulic system in a Caterpillar machine?',
+      question: 'What is the primary purpose of the hydraulic system in a heavy equipment machine?',
       options: ['To provide heat', 'To generate electricity', 'To power attachments and movement', 'To play music'],
       correctAnswer: 2
     },
     {
       id: '7',
-      question: 'How should you approach a slope when operating a Caterpillar excavator?',
+      question: 'How should you approach a slope when operating a heavy equipment excavator?',
       options: ['As fast as possible', 'Sideways', 'Straight up and down', 'At a safe angle with proper technique'],
       correctAnswer: 3
     },
     {
       id: '8',
-      question: 'What does the yellow warning light on a Caterpillar dashboard typically indicate?',
+      question: 'What does the yellow warning light on a Checkmate dashboard typically indicate?',
       options: ['Engine overheating', 'Low fuel', 'Maintenance required', 'All of the above'],
       correctAnswer: 3
     }
@@ -493,15 +515,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
   useEffect(() => {
     // Initial animation
-    gsap.fromTo(dashboardRef.current, 
-      { opacity: 0, y: 30 }, 
+    gsap.fromTo(dashboardRef.current,
+      { opacity: 0, y: 30 },
       { opacity: 1, y: 0, duration: 1, ease: "power3.out" }
     );
 
     // Animate cards on scroll
     cardsRef.current.forEach((card, index) => {
       if (card) {
-        gsap.fromTo(card, 
+        gsap.fromTo(card,
           { opacity: 0, y: 50 },
           {
             opacity: 1,
@@ -523,9 +545,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   useEffect(() => {
     // Animate tab switch
     const tl = gsap.timeline();
-    
-    tl.fromTo(contentRef.current, 
-      { opacity: 0, y: 20 }, 
+
+    tl.fromTo(contentRef.current,
+      { opacity: 0, y: 20 },
       { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
     );
   }, [activeTab]);
@@ -545,7 +567,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
   const toggleTaskCompletion = (taskId: string) => {
-    setTasks(tasks.map(task => 
+    setTasks(tasks.map(task =>
       task.id === taskId ? { ...task, completed: !task.completed } : task
     ));
   };
@@ -566,7 +588,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     if (selectedAnswer === quizQuestions[currentQuestion].correctAnswer) {
       setQuizScore(quizScore + 1);
     }
-    
+
     if (currentQuestion < quizQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
@@ -585,95 +607,87 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <div ref={dashboardRef} className={`min-h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
+    <div ref={dashboardRef} className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'
+      }`}>
       {/* Notification System */}
-      <NotificationSystem 
+      <NotificationSystem
         obstacleData={obstacleData}
         engineData={engineData}
+        drowsinessData={drowsinessData}
         darkMode={darkMode}
       />
-      
+
       {/* Header */}
-      <header className={`shadow-lg border-b transition-colors duration-300 ${
-        darkMode 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-200'
-      }`}>
+      <header className={`shadow-lg border-b transition-colors duration-300 ${darkMode
+        ? 'bg-gray-800 border-gray-700'
+        : 'bg-white border-gray-200'
+        }`}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 caterpillar-yellow rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 checkmate-yellow rounded-xl flex items-center justify-center shadow-lg">
                 <Settings className="w-7 h-7 text-black" />
               </div>
               <div>
-                <h1 className={`text-2xl font-bold ${
-                  darkMode ? 'text-white' : 'text-gray-900'
-                }`}>
+                <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
                   CheckMate
                 </h1>
-                <p className={`text-sm ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                   Welcome back, {user.name}
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {/* Navigation Tabs */}
-              <div className={`flex rounded-xl p-1 shadow-inner ${
-                darkMode ? 'bg-gray-700' : 'bg-gray-100'
-              }`}>
+              <div className={`flex rounded-xl p-1 shadow-inner ${darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                }`}>
                 <button
                   onClick={() => setActiveTabWithAnimation('tasks')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-                    activeTab === 'tasks' 
-                      ? 'caterpillar-yellow text-black shadow-md transform scale-105' 
-                      : darkMode 
-                        ? 'text-gray-300 hover:text-white hover:bg-gray-600' 
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${activeTab === 'tasks'
+                    ? 'checkmate-yellow text-black shadow-md transform scale-105'
+                    : darkMode
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                    }`}
                 >
                   <CheckCircle className="w-4 h-4" />
                   <span className="font-medium">Tasks</span>
                 </button>
                 <button
                   onClick={() => setActiveTabWithAnimation('logs')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-                    activeTab === 'logs' 
-                      ? 'caterpillar-yellow text-black shadow-md transform scale-105' 
-                      : darkMode 
-                        ? 'text-gray-300 hover:text-white hover:bg-gray-600' 
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${activeTab === 'logs'
+                    ? 'checkmate-yellow text-black shadow-md transform scale-105'
+                    : darkMode
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                    }`}
                 >
                   <ClipboardList className="w-4 h-4" />
                   <span className="font-medium">Logs</span>
                 </button>
                 <button
                   onClick={() => setActiveTabWithAnimation('incidents')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-                    activeTab === 'incidents' 
-                      ? 'caterpillar-yellow text-black shadow-md transform scale-105' 
-                      : darkMode 
-                        ? 'text-gray-300 hover:text-white hover:bg-gray-600' 
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${activeTab === 'incidents'
+                    ? 'checkmate-yellow text-black shadow-md transform scale-105'
+                    : darkMode
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                    }`}
                 >
                   <Shield className="w-4 h-4" />
                   <span className="font-medium">Incidents</span>
                 </button>
                 <button
                   onClick={() => setActiveTabWithAnimation('learning')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-                    activeTab === 'learning' 
-                      ? 'caterpillar-yellow text-black shadow-md transform scale-105' 
-                      : darkMode 
-                        ? 'text-gray-300 hover:text-white hover:bg-gray-600' 
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${activeTab === 'learning'
+                    ? 'checkmate-yellow text-black shadow-md transform scale-105'
+                    : darkMode
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                    }`}
                 >
                   <BookOpen className="w-4 h-4" />
                   <span className="font-medium">Learning</span>
@@ -683,11 +697,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               {/* Dark Mode Toggle */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-lg transition-colors ${
-                  darkMode 
-                    ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`p-2 rounded-lg transition-colors ${darkMode
+                  ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
                 disabled={!seatBeltOn}
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -697,11 +710,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               <div className="relative z-50">
                 <button
                   onClick={() => setSeatBeltOn((prev) => !prev)}
-                  className={`p-2 rounded-lg transition-colors border-2 ${
-                    seatBeltOn
-                      ? 'border-green-500 bg-green-100 text-green-700' 
-                      : 'border-red-500 bg-red-100 text-red-700 animate-pulse'
-                  }`}
+                  className={`p-2 rounded-lg transition-colors border-2 ${seatBeltOn
+                    ? 'border-green-500 bg-green-100 text-green-700'
+                    : 'border-red-500 bg-red-100 text-red-700 animate-pulse'
+                    }`}
                   title={seatBeltOn ? 'Seat Belt Secured' : 'Seat Belt Not Secured'}
                   style={{ position: 'relative', zIndex: 1001 }}
                 >
@@ -713,11 +725,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={onLogout}
-                  className={`p-2 rounded-lg transition-colors ${
-                    darkMode 
-                      ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
+                  className={`p-2 rounded-lg transition-colors ${darkMode
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
@@ -750,14 +761,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       )}
 
       {/* Main Content (disabled when seatBeltOn is false) */}
-      <main className={`max-w-7xl mx-auto px-6 py-6 ${!seatBeltOn ? 'pointer-events-none select-none opacity-40' : ''}`}> 
+      <main className={`max-w-7xl mx-auto px-6 py-6 ${!seatBeltOn ? 'pointer-events-none select-none opacity-40' : ''}`}>
         <div ref={contentRef} className="space-y-6">
           {/* Real-time Data Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Speed Data Card */}
-            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-blue-500 transition-all duration-300 hover:shadow-xl ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}>
+            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-blue-500 transition-all duration-300 hover:shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-600'}`}>Recommended Speed</p>
@@ -779,9 +789,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             </div>
 
             {/* Obstacle Data Card */}
-            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-red-500 transition-all duration-300 hover:shadow-xl ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}>
+            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-red-500 transition-all duration-300 hover:shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-600'}`}>Obstacle Analysis</p>
@@ -804,9 +813,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             </div>
 
             {/* Engine Data Card */}
-            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-green-500 transition-all duration-300 hover:shadow-xl ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}>
+            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-green-500 transition-all duration-300 hover:shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-600'}`}>Engine Status</p>
@@ -842,9 +850,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             </div>
 
             {/* Task Count Card */}
-            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-yellow-500 transition-all duration-300 hover:shadow-xl ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}>
+            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-yellow-500 transition-all duration-300 hover:shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-600'}`}>Scheduled Tasks</p>
@@ -858,7 +865,37 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 <div>Total Logs: {logs.length}</div>
               </div>
             </div>
+
+            {/* Drowsiness Data Card */}
+            <div className={`p-4 rounded-xl shadow-lg border-l-4 border-purple-500 transition-all duration-300 hover:shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-600'}`}>Operator State</p>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {drowsinessData ? (drowsinessData.detected ? 'Drowsy' : 'Normal') : 'Unknown'}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                  <Eye className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+              {drowsinessData && (
+                <div className={`mt-2 text-xs font-semibold ${drowsinessData.detected
+                  ? 'text-red-500 dark:text-red-300'
+                  : 'text-green-500 dark:text-green-300'
+                  }`}>
+                  Confidence: {drowsinessData.confidence ? Math.round(drowsinessData.confidence * 100) : 0}%
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Drowsy Detector Main Component */}
+          <DrowsyDetector
+            vehicleId={user.vehicle_id || '004B12EFE56C'}
+            darkMode={darkMode}
+          />
 
           {/* Tasks Tab */}
           {activeTab === 'tasks' && (
@@ -866,9 +903,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Example: Completed Tasks */}
-                <div className={`p-4 rounded-xl shadow-lg border-l-4 border-blue-500 transition-all duration-300 hover:shadow-xl hover:scale-105 ${
-                  darkMode ? 'bg-gray-800' : 'bg-white'
-                }`}>
+                <div className={`p-4 rounded-xl shadow-lg border-l-4 border-blue-500 transition-all duration-300 hover:shadow-xl hover:scale-105 ${darkMode ? 'bg-gray-800' : 'bg-white'
+                  }`}>
                   <div className="flex items-center">
                     <div className={`p-3 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
                       <CheckCircle className="w-6 h-6 text-blue-600" />
@@ -883,9 +919,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               </div>
 
               {/* Tasks List */}
-              <div className={`rounded-xl shadow-lg border-gray-200 dark:border-gray-700 ${
-                darkMode ? 'bg-gray-800' : 'bg-white'
-              }`}>
+              <div className={`rounded-xl shadow-lg border-gray-200 dark:border-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'
+                }`}>
                 <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                   <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Task Schedule</h2>
                 </div>
@@ -949,9 +984,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
           {/* Logs Tab */}
           {activeTab === 'logs' && (
-            <div className={`rounded-xl shadow-lg border-gray-200 dark:border-gray-700 p-4 ${
-              darkMode ? 'bg-gray-800' : 'bg-white'
-            }`}>
+            <div className={`rounded-xl shadow-lg border-gray-200 dark:border-gray-700 p-4 ${darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
               <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Logs</h2>
               {loading ? (
                 <div className="text-center py-8">
@@ -989,43 +1023,37 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           {/* Learning Modules */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {learningModules.map((module) => (
-                    <div
-                      key={module.id}
-                className={`p-6 rounded-xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl cursor-pointer ${
-                        darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                      }`}
-                      onClick={() => module.type === 'quiz' ? startQuiz() : setSelectedLearningModule(module)}
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${
-                    darkMode ? 'bg-gray-700' : 'bg-gray-100'
-                  }`}>
-                          {module.icon}
-                        </div>
-                  <span className={`text-sm px-2 py-1 rounded-full ${
-                    module.type === 'quiz' ? 'bg-yellow-100 text-yellow-800' :
+              <div
+                key={module.id}
+                className={`p-6 rounded-xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl cursor-pointer ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                  }`}
+                onClick={() => module.type === 'quiz' ? startQuiz() : setSelectedLearningModule(module)}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                    }`}>
+                    {module.icon}
+                  </div>
+                  <span className={`text-sm px-2 py-1 rounded-full ${module.type === 'quiz' ? 'bg-yellow-100 text-yellow-800' :
                     module.type === 'video' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
+                      'bg-green-100 text-green-800'
+                    }`}>
                     {module.type}
-                        </span>
-                      </div>
-                <h3 className={`text-lg font-semibold mb-2 ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        {module.title}
-                      </h3>
-                      <p className={`text-sm mb-4 ${
-                        darkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        {module.description}
-                      </p>
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                  </span>
+                </div>
+                <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'
                   }`}>
+                  {module.title}
+                </h3>
+                <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                  {module.description}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
                     {module.duration}
-                          </span>
+                  </span>
                   {module.type === 'quiz' ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); startQuiz(); }}
@@ -1037,167 +1065,151 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                     <div className="w-16 h-2 bg-gray-200 rounded-full">
                       <div
                         className="h-2 bg-yellow-500 rounded-full transition-all duration-300"
-                            style={{ width: `${module.progress}%` }}
-                          />
-                        </div>
-                        )}
-                      </div>
+                        style={{ width: `${module.progress}%` }}
+                      />
                     </div>
-                  ))}
+                  )}
                 </div>
+              </div>
+            ))}
+          </div>
 
           {/* Quiz Modal */}
           {quizActive && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className={`max-w-md w-full mx-4 p-6 rounded-xl shadow-2xl ${
-                      darkMode ? 'bg-gray-800' : 'bg-white'
-                    }`}>
+              <div className={`max-w-md w-full mx-4 p-6 rounded-xl shadow-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'
+                }`}>
                 {!quizCompleted ? (
                   <>
                     <div className="flex justify-between items-center mb-6">
-                          <h3 className={`text-xl font-bold ${
-                            darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>
-                        Caterpillar Vehicle Quiz
-                          </h3>
-                          <span className={`text-sm ${
-                        darkMode ? 'text-gray-400' : 'text-gray-600'
-                          }`}>
-                        {currentQuestion + 1} / {quizQuestions.length}
-                          </span>
-                      </div>
-                      
-                      <div className="mb-6">
-                      <p className={`text-lg mb-4 ${
-                          darkMode ? 'text-white' : 'text-gray-900'
+                      <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'
                         }`}>
-                          {quizQuestions[currentQuestion].question}
+                        Checkmate - Smart Operator Quiz
+                      </h3>
+                      <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`}>
+                        {currentQuestion + 1} / {quizQuestions.length}
+                      </span>
+                    </div>
+
+                    <div className="mb-6">
+                      <p className={`text-lg mb-4 ${darkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
+                        {quizQuestions[currentQuestion].question}
                       </p>
-                      
-                        <div className="space-y-3">
-                          {quizQuestions[currentQuestion].options.map((option, index) => (
-                            <button
-                              key={index}
-                              onClick={() => selectAnswer(index)}
-                            className={`w-full p-3 text-left rounded-lg border-2 transition-all duration-200 ${
-                                selectedAnswer === index 
-                                ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
-                                  : darkMode 
-                                  ? 'border-gray-600 bg-gray-700 hover:border-gray-500'
-                                  : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+
+                      <div className="space-y-3">
+                        {quizQuestions[currentQuestion].options.map((option, index) => (
+                          <button
+                            key={index}
+                            onClick={() => selectAnswer(index)}
+                            className={`w-full p-3 text-left rounded-lg border-2 transition-all duration-200 ${selectedAnswer === index
+                              ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
+                              : darkMode
+                                ? 'border-gray-600 bg-gray-700 hover:border-gray-500'
+                                : 'border-gray-300 bg-gray-50 hover:border-gray-400'
                               }`}
-                            >
-                            <span className={`${
-                              darkMode ? 'text-white' : 'text-gray-900'
-                            }`}>
+                          >
+                            <span className={`${darkMode ? 'text-white' : 'text-gray-900'
+                              }`}>
                               {option}
                             </span>
-                            </button>
-                          ))}
-                        </div>
+                          </button>
+                        ))}
                       </div>
-                      
-                      <div className="flex justify-between">
-                        <button
-                          onClick={() => setQuizActive(false)}
-                        className={`px-4 py-2 rounded-lg ${
-                            darkMode 
-                            ? 'bg-gray-700 text-white hover:bg-gray-600'
-                            : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                    </div>
+
+                    <div className="flex justify-between">
+                      <button
+                        onClick={() => setQuizActive(false)}
+                        className={`px-4 py-2 rounded-lg ${darkMode
+                          ? 'bg-gray-700 text-white hover:bg-gray-600'
+                          : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
                           }`}
-                        >
-                          Exit Quiz
-                        </button>
-                        <button
-                          onClick={nextQuestion}
-                          disabled={selectedAnswer === null}
-                        className={`px-6 py-2 rounded-lg ${
-                          selectedAnswer === null
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'caterpillar-yellow text-black hover:bg-yellow-600'
-                        }`}
-                        >
-                          {currentQuestion === quizQuestions.length - 1 ? 'Finish' : 'Next'}
-                        </button>
-                      </div>
+                      >
+                        Exit Quiz
+                      </button>
+                      <button
+                        onClick={nextQuestion}
+                        disabled={selectedAnswer === null}
+                        className={`px-6 py-2 rounded-lg ${selectedAnswer === null
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'checkmate-yellow text-black hover:bg-yellow-600'
+                          }`}
+                      >
+                        {currentQuestion === quizQuestions.length - 1 ? 'Finish' : 'Next'}
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <div className="text-center">
-                    <div className="w-16 h-16 caterpillar-yellow rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 checkmate-yellow rounded-full flex items-center justify-center mx-auto mb-4">
                       <Trophy className="w-8 h-8 text-black" />
                     </div>
-                        <h3 className={`text-2xl font-bold mb-2 ${
-                          darkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
+                    <h3 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'
+                      }`}>
                       Quiz Complete!
-                        </h3>
-                    <p className={`text-lg mb-4 ${
-                      darkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
+                    </h3>
+                    <p className={`text-lg mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
                       Your score: {quizScore} / {quizQuestions.length}
                     </p>
-                    <p className={`text-sm mb-6 ${
-                      darkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      {quizScore === quizQuestions.length ? 'Perfect! You\'re a Caterpillar expert!' :
-                       quizScore >= quizQuestions.length * 0.8 ? 'Great job! You know your Caterpillar machines!' :
-                       quizScore >= quizQuestions.length * 0.6 ? 'Good effort! Keep learning!' :
-                       'Keep studying Caterpillar safety and operations!'}
+                    <p className={`text-sm mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                      {quizScore === quizQuestions.length ? 'Perfect! You\'re a Checkmate expert!' :
+                        quizScore >= quizQuestions.length * 0.8 ? 'Great job! You know your heavy equipment!' :
+                          quizScore >= quizQuestions.length * 0.6 ? 'Good effort! Keep learning!' :
+                            'Keep studying Checkmate safety and operations!'}
                     </p>
                     <div className="flex space-x-3">
-                        <button
+                      <button
                         onClick={() => {
                           setQuizActive(false);
                           setQuizCompleted(false);
                         }}
-                        className={`px-4 py-2 rounded-lg ${
-                          darkMode
-                            ? 'bg-gray-700 text-white hover:bg-gray-600'
-                            : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                        }`}
+                        className={`px-4 py-2 rounded-lg ${darkMode
+                          ? 'bg-gray-700 text-white hover:bg-gray-600'
+                          : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                          }`}
                       >
                         Close
-                        </button>
-                        <button
+                      </button>
+                      <button
                         onClick={() => {
                           setQuizCompleted(false);
                           startQuiz();
                         }}
-                        className="px-6 py-2 caterpillar-yellow text-black rounded-lg hover:bg-yellow-600"
-                        >
-                          Retake Quiz
-                        </button>
-                      </div>
+                        className="px-6 py-2 checkmate-yellow text-black rounded-lg hover:bg-yellow-600"
+                      >
+                        Retake Quiz
+                      </button>
                     </div>
-                  )}
+                  </div>
+                )}
               </div>
-                </div>
-              )}
+            </div>
+          )}
 
           {/* Learning Module Modal */}
           {selectedLearningModule && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className={`max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl ${
-                darkMode ? 'bg-gray-800' : 'bg-white'
-              }`}>
+              <div className={`max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'
+                }`}>
                 <div className="p-6">
                   {/* Header */}
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center space-x-3">
-                      <div className={`p-3 rounded-lg ${
-                        darkMode ? 'bg-gray-700' : 'bg-gray-100'
-                      }`}>
+                      <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                        }`}>
                         {selectedLearningModule.icon}
                       </div>
                       <div>
-                        <h2 className={`text-2xl font-bold ${
-                          darkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
+                        <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'
+                          }`}>
                           {selectedLearningModule.title}
                         </h2>
-                        <p className={`text-sm ${
-                          darkMode ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
                           Duration: {selectedLearningModule.duration} | Progress: {selectedLearningModule.progress}%
                         </p>
                       </div>
@@ -1214,9 +1226,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   <div className="space-y-6">
                     {/* Main Description */}
                     <div>
-                      <p className={`text-lg leading-relaxed ${
-                        darkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
+                      <p className={`text-lg leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
                         {selectedLearningModule.content?.text}
                       </p>
                     </div>
@@ -1224,9 +1235,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                     {/* YouTube Video */}
                     {selectedLearningModule.content?.youtubeUrl && (
                       <div>
-                        <h3 className={`text-xl font-semibold mb-3 ${
-                          darkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
+                        <h3 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'
+                          }`}>
                           📺 Video Tutorial
                         </h3>
                         <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
@@ -1245,27 +1255,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                     {/* Sections */}
                     {selectedLearningModule.content?.sections && (
                       <div>
-                        <h3 className={`text-xl font-semibold mb-4 ${
-                          darkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
+                        <h3 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'
+                          }`}>
                           �� Learning Sections
                         </h3>
                         <div className="space-y-4">
                           {selectedLearningModule.content.sections.map((section, index) => (
                             <div
                               key={index}
-                              className={`p-4 rounded-lg border ${
-                                darkMode ? 'border-gray-700 bg-gray-700/50' : 'border-gray-200 bg-gray-50'
-                              }`}
+                              className={`p-4 rounded-lg border ${darkMode ? 'border-gray-700 bg-gray-700/50' : 'border-gray-200 bg-gray-50'
+                                }`}
                             >
-                              <h4 className={`font-semibold mb-2 ${
-                                darkMode ? 'text-white' : 'text-gray-900'
-                              }`}>
+                              <h4 className={`font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'
+                                }`}>
                                 {section.title}
                               </h4>
-                              <p className={`text-sm leading-relaxed ${
-                                darkMode ? 'text-gray-300' : 'text-gray-600'
-                              }`}>
+                              <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'
+                                }`}>
                                 {section.content}
                               </p>
                             </div>
@@ -1275,18 +1281,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                     )}
 
                     {/* Progress Section */}
-                    <div className={`p-4 rounded-lg ${
-                      darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-                    }`}>
+                    <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
+                      }`}>
                       <div className="flex justify-between items-center mb-2">
-                        <span className={`font-semibold ${
-                          darkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
+                        <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'
+                          }`}>
                           Your Progress
                         </span>
-                        <span className={`text-sm ${
-                          darkMode ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
+                        <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
                           {selectedLearningModule.progress}% Complete
                         </span>
                       </div>
@@ -1303,9 +1306,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => setSelectedLearningModule(null)}
-                      className={`px-4 py-2 rounded-lg ${
-                        darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                      }`}
+                      className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                        }`}
                     >
                       Close
                     </button>
@@ -1315,7 +1317,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                           setSelectedLearningModule(null);
                           startQuiz();
                         }}
-                        className="px-6 py-2 caterpillar-yellow text-black rounded-lg hover:bg-yellow-600"
+                        className="px-6 py-2 checkmate-yellow text-black rounded-lg hover:bg-yellow-600"
                       >
                         Start Quiz
                       </button>
@@ -1326,7 +1328,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             </div>
           )}
         </div>
-          )}
+      )}
     </div>
   );
 };

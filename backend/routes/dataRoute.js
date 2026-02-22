@@ -132,6 +132,11 @@ router.post('/predict/drowsiness', requireVehicleId, async (req, res) => {
       $setOnInsert: { timestamp: new Date() }
     };
     const log = await OperatorLog.findOneAndUpdate(filter, update, { new: true, upsert: true });
+    req.io?.emit('drowsiness_update', {
+      vehicle_id,
+      drowsiness_event: log.drowsiness_event || null,
+      logs: log.logs || []
+    });
     req.io?.emit('operatorlog_update', { log, event: 'drowsiness_event' });
     res.json({ message: '✅ Drowsiness event logged', drowsiness_event, log });
   } catch (err) {

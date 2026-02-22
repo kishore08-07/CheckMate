@@ -33,9 +33,11 @@ interface SpeechRecognitionAlternative {
   confidence: number;
 }
 
-interface Window {
-  SpeechRecognition?: new () => SpeechRecognition;
-  webkitSpeechRecognition?: new () => SpeechRecognition;
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognition;
+    webkitSpeechRecognition?: new () => SpeechRecognition;
+  }
 }
 
 interface ChatbotProps {
@@ -58,8 +60,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ darkMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
-  const [apiKey, setApiKey] = useState("YOUR_API_KEY");
-  const [showApiInput, setShowApiInput] = useState(false);
+  const [apiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || "");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -117,12 +118,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ darkMode }) => {
 
     try {
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-goog-api-key": apiKey,
           },
           body: JSON.stringify({
             contents: [
@@ -131,7 +131,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ darkMode }) => {
                   {
                     text: `You are CheckMate, a specialized AI assistant for heavy machinery and construction equipment operations. You help operators with:
 
-1. Equipment Operation: Guidance on proper operation of Caterpillar and other heavy machinery
+1. Equipment Operation: Guidance on proper operation of Checkmate-monitored and other heavy machinery
 2. Safety Procedures: Best practices for construction site safety and equipment handling
 3. Maintenance: Preventive maintenance schedules, troubleshooting, and repair guidance
 4. Performance Optimization: Tips for fuel efficiency, productivity, and equipment longevity
@@ -144,6 +144,8 @@ You have access to real-time data from the vehicle monitoring system including:
 - Task schedules and completion status
 - Speed predictions and obstacle detection
 - RFID access logs
+
+IMPORTANT CONSTRAINT: You must ONLY answer questions related to heavy machinery, equipment operation, construction safety, maintenance, CheckMate systems, and the topics listed above. If the user asks a question about general knowledge, programming, weather, sports, or ANY topic outside this specific domain, you MUST politely decline and state that you are only authorized to assist with CheckMate and equipment-related queries. Do not attempt to answer off-topic questions under any circumstances.
 
 Please respond in a helpful, professional manner with practical advice. If you need specific data from the monitoring system, ask the operator to check the dashboard.
 
@@ -282,19 +284,7 @@ User message: ${userMessage}`,
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const handleApiKeySubmit = () => {
-    setShowApiInput(false);
-    if (apiKey) {
-      // Add a system message to confirm API key is set
-      const systemMessage = {
-        id: messages.length + 1,
-        text: "✅ API key configured successfully! I'm now ready to assist you with your vehicle operations.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, systemMessage]);
-    }
-  };
+
 
   if (!isOpen) {
     return (
@@ -572,7 +562,7 @@ User message: ${userMessage}`,
 
           {/* Speaker Button */}
           <button
-            onClick={isSpeaking ? stopSpeaking : () => {}}
+            onClick={isSpeaking ? stopSpeaking : () => { }}
             style={{
               background: isSpeaking ? "hsl(39, 100%, 56%)" : darkMode ? "#4b5563" : "#e2e8f0",
               border: "none",

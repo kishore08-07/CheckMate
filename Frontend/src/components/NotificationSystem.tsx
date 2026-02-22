@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, Thermometer, Volume2, VolumeX, X } from 'lucide-react';
+import { AlertTriangle, Thermometer, Volume2, VolumeX, X, Eye } from 'lucide-react';
 
 interface NotificationSystemProps {
   obstacleData: any;
   engineData: any;
+  drowsinessData: any;
   darkMode: boolean;
 }
 
 interface Notification {
   id: string;
-  type: 'obstacle' | 'engine_heat';
+  type: 'obstacle' | 'engine_heat' | 'drowsiness';
   title: string;
   message: string;
   severity: 'warning' | 'critical';
@@ -17,10 +18,11 @@ interface Notification {
   read: boolean;
 }
 
-const NotificationSystem: React.FC<NotificationSystemProps> = ({ 
-  obstacleData, 
-  engineData, 
-  darkMode 
+const NotificationSystem: React.FC<NotificationSystemProps> = ({
+  obstacleData,
+  engineData,
+  drowsinessData,
+  darkMode
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isMuted, setIsMuted] = useState(false);
@@ -53,7 +55,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
         timestamp: new Date(),
         read: false
       };
-      
+
       addNotification(notification);
       playVoiceAlert('Obstacle detected. Please proceed with caution.');
     }
@@ -63,9 +65,9 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
   useEffect(() => {
     if (engineData) {
       const temp = engineData.engine_temperature;
-      const hasFault = engineData.fault_status && 
-        (engineData.fault_status.toLowerCase().includes('temperature') || 
-         engineData.fault_status.toLowerCase().includes('overheat'));
+      const hasFault = engineData.fault_status &&
+        (engineData.fault_status.toLowerCase().includes('temperature') ||
+          engineData.fault_status.toLowerCase().includes('overheat'));
 
       if (temp > 90 || hasFault) {
         const notification: Notification = {
@@ -77,21 +79,39 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
           timestamp: new Date(),
           read: false
         };
-        
+
         addNotification(notification);
         playVoiceAlert(`Engine temperature warning. Temperature is ${temp?.toFixed(1) || 'unknown'} degrees Celsius.`);
       }
     }
   }, [engineData?.engine_temperature, engineData?.fault_status]);
 
+  // Check for drowsiness
+  useEffect(() => {
+    if (drowsinessData && drowsinessData.detected) {
+      const notification: Notification = {
+        id: `drowsiness-${Date.now()}`,
+        type: 'drowsiness',
+        title: '⚠️ CRITICAL: Drowsiness Detected',
+        message: 'Operator drowsiness detected. Please take a break immediately.',
+        severity: 'critical',
+        timestamp: new Date(),
+        read: false
+      };
+
+      addNotification(notification);
+      playVoiceAlert('Drowsiness detected. Please take a break immediately.');
+    }
+  }, [drowsinessData?.detected]);
+
   const addNotification = (notification: Notification) => {
     setNotifications(prev => {
       // Check if similar notification already exists (within last 30 seconds)
-      const existingIndex = prev.findIndex(n => 
-        n.type === notification.type && 
+      const existingIndex = prev.findIndex(n =>
+        n.type === notification.type &&
         Date.now() - n.timestamp.getTime() < 30000
       );
-      
+
       if (existingIndex >= 0) {
         // Update existing notification
         const updated = [...prev];
@@ -119,7 +139,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
       utterance.pitch = 1.2;
       utterance.volume = 0.8;
       utterance.lang = 'en-US';
-      
+
       // Cancel any existing speech
       speechSynthesis.current.cancel();
       speechSynthesis.current.speak(utterance);
@@ -127,7 +147,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(n => n.id === id ? { ...n, read: true } : n)
     );
   };
@@ -146,7 +166,7 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
   // Auto-dismiss critical notifications after 30 seconds
   useEffect(() => {
     const criticalNotifications = notifications.filter(n => n.severity === 'critical' && !n.read);
-    
+
     criticalNotifications.forEach(notification => {
       const timer = setTimeout(() => {
         markAsRead(notification.id);
@@ -182,9 +202,8 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
       <div className="fixed top-4 right-4 z-50">
         <button
           onClick={() => setShowNotifications(!showNotifications)}
-          className={`relative p-3 rounded-full shadow-lg transition-all duration-300 ${
-            darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-          } hover:shadow-xl`}
+          className={`relative p-3 rounded-full shadow-lg transition-all duration-300 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+            } hover:shadow-xl`}
         >
           <AlertTriangle className="w-6 h-6" />
           {unreadCount > 0 && (
@@ -197,11 +216,10 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
         {/* Mute Button */}
         <button
           onClick={toggleMute}
-          className={`absolute top-12 right-0 p-2 rounded-full shadow-lg transition-all duration-300 ${
-            isMuted 
-              ? 'bg-red-500 text-white' 
+          className={`absolute top-12 right-0 p-2 rounded-full shadow-lg transition-all duration-300 ${isMuted
+              ? 'bg-red-500 text-white'
               : darkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-700'
-          } hover:shadow-xl`}
+            } hover:shadow-xl`}
         >
           {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
@@ -210,12 +228,10 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
       {/* Notifications Panel */}
       {showNotifications && (
         <div className="fixed top-20 right-4 z-50 w-80 max-h-96 overflow-y-auto">
-          <div className={`rounded-xl shadow-2xl border ${
-            darkMode ? 'bg-gray-900 border-gray-600' : 'bg-white border-gray-200'
-          }`}>
-            <div className={`p-4 border-b ${
-              darkMode ? 'border-gray-700' : 'border-gray-200'
+          <div className={`rounded-xl shadow-2xl border ${darkMode ? 'bg-gray-900 border-gray-600' : 'bg-white border-gray-200'
             }`}>
+            <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'
+              }`}>
               <div className="flex justify-between items-center">
                 <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   Notifications ({unreadCount} unread)
@@ -231,20 +247,18 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
 
             <div className="p-2">
               {notifications.length === 0 ? (
-                <div className={`text-center py-8 text-sm ${
-                  darkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
+                <div className={`text-center py-8 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
                   No notifications
                 </div>
               ) : (
                 notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`mb-2 p-3 rounded-lg border-l-4 transition-all duration-300 ${
-                      notification.severity === 'critical'
+                    className={`mb-2 p-3 rounded-lg border-l-4 transition-all duration-300 ${notification.severity === 'critical'
                         ? 'border-red-500 bg-red-50 dark:bg-red-800/80'
                         : 'border-yellow-500 bg-yellow-50 dark:bg-yellow-800/80'
-                    } ${notification.read ? 'opacity-60' : ''}`}
+                      } ${notification.read ? 'opacity-60' : ''}`}
                     onClick={() => markAsRead(notification.id)}
                   >
                     <div className="flex justify-between items-start">
@@ -252,23 +266,22 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
                         <div className="flex items-center space-x-2 mb-1">
                           {notification.type === 'obstacle' ? (
                             <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                          ) : notification.type === 'drowsiness' ? (
+                            <Eye className="w-4 h-4 text-purple-600" />
                           ) : (
                             <Thermometer className="w-4 h-4 text-red-600" />
                           )}
-                          <h4 className={`font-semibold text-sm ${
-                            darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>
+                          <h4 className={`font-semibold text-sm ${darkMode ? 'text-white' : 'text-gray-900'
+                            }`}>
                             {notification.title}
                           </h4>
                         </div>
-                        <p className={`text-xs ${
-                          darkMode ? 'text-gray-300' : 'text-gray-600'
-                        }`}>
+                        <p className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'
+                          }`}>
                           {notification.message}
                         </p>
-                        <p className={`text-xs mt-1 ${
-                          darkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
+                        <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
                           {notification.timestamp.toLocaleTimeString()}
                         </p>
                       </div>
@@ -294,9 +307,8 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
       {notifications.filter(n => n.severity === 'critical' && !n.read).map((notification) => (
         <div
           key={`toast-${notification.id}`}
-          className={`fixed top-4 left-4 z-50 p-4 rounded-lg shadow-2xl border-l-4 border-red-500 bg-red-50 dark:bg-red-800/90 max-w-sm animate-pulse ${
-            darkMode ? 'text-white' : 'text-gray-900'
-          }`}
+          className={`fixed top-4 left-4 z-50 p-4 rounded-lg shadow-2xl border-l-4 border-red-500 bg-red-50 dark:bg-red-800/90 max-w-sm animate-pulse ${darkMode ? 'text-white' : 'text-gray-900'
+            }`}
         >
           <div className="flex items-center space-x-2 mb-2">
             <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -312,30 +324,29 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
           key={`overlay-${notification.id}`}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
         >
-          <div className={`mx-4 p-6 rounded-2xl shadow-2xl border-4 border-red-500 max-w-md w-full ${
-            darkMode ? 'bg-red-900/95' : 'bg-white'
-          } animate-bounce`}>
+          <div className={`mx-4 p-6 rounded-2xl shadow-2xl border-4 border-red-500 max-w-md w-full ${darkMode ? 'bg-red-900/95' : 'bg-white'
+            } animate-bounce`}>
             <div className="text-center">
               {/* Icon */}
               <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                 {notification.type === 'obstacle' ? (
                   <AlertTriangle className="w-8 h-8 text-white" />
+                ) : notification.type === 'drowsiness' ? (
+                  <Eye className="w-8 h-8 text-white" />
                 ) : (
                   <Thermometer className="w-8 h-8 text-white" />
                 )}
               </div>
 
               {/* Title */}
-              <h2 className={`text-2xl font-bold mb-2 ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'
+                }`}>
                 {notification.title}
               </h2>
 
               {/* Message */}
-              <p className={`text-lg mb-6 ${
-                darkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
+              <p className={`text-lg mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
                 {notification.message}
               </p>
 
@@ -360,13 +371,12 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
 
               {/* Auto-dismiss timer */}
               <div className="mt-4">
-                <div className={`text-sm ${
-                  darkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
+                <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
                   Auto-dismiss in 30 seconds
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div 
+                  <div
                     className="bg-red-500 h-2 rounded-full transition-all duration-1000"
                     style={{ width: '100%' }}
                   />
@@ -381,22 +391,19 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({
       {notifications.filter(n => n.severity === 'warning' && !n.read).map((notification) => (
         <div
           key={`banner-${notification.id}`}
-          className={`fixed top-0 left-0 right-0 z-[90] p-4 shadow-lg border-b-2 border-yellow-500 ${
-            darkMode ? 'bg-yellow-600/90' : 'bg-yellow-50'
-          } animate-slideDown`}
+          className={`fixed top-0 left-0 right-0 z-[90] p-4 shadow-lg border-b-2 border-yellow-500 ${darkMode ? 'bg-yellow-600/90' : 'bg-yellow-50'
+            } animate-slideDown`}
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <AlertTriangle className="w-6 h-6 text-yellow-600" />
               <div>
-                <h3 className={`font-semibold ${
-                  darkMode ? 'text-white' : 'text-gray-900'
-                }`}>
+                <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
                   {notification.title}
                 </h3>
-                <p className={`text-sm ${
-                  darkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
+                <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
                   {notification.message}
                 </p>
               </div>

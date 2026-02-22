@@ -159,7 +159,7 @@ const SafetyChecks: React.FC<SafetyChecksProps> = ({ onComplete, darkMode, user 
       }`}>
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 caterpillar-yellow rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="w-16 h-16 checkmate-yellow rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Shield className="w-8 h-8 text-black" />
           </div>
           <h1 className={`text-3xl font-bold mb-2 ${
@@ -291,7 +291,7 @@ const SafetyChecks: React.FC<SafetyChecksProps> = ({ onComplete, darkMode, user 
             disabled={!allChecked}
             className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center space-x-2 mx-auto ${
               allChecked
-                ? 'caterpillar-yellow text-black hover:bg-yellow-600 shadow-lg hover:shadow-xl transform hover:scale-105'
+                ? 'checkmate-yellow text-black hover:bg-yellow-600 shadow-lg hover:shadow-xl transform hover:scale-105'
                 : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
             }`}
           >

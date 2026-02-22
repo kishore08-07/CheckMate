@@ -166,7 +166,7 @@ const LogsMenu: React.FC<LogsMenuProps> = ({ darkMode, user }) => {
         }`}>
           Operation Logs
         </h2>
-        <button className="flex items-center space-x-2 px-4 py-2 caterpillar-yellow text-black rounded-lg hover:bg-yellow-600 transition-colors">
+        <button className="flex items-center space-x-2 px-4 py-2 checkmate-yellow text-black rounded-lg hover:bg-yellow-600 transition-colors">
           <Download className="w-4 h-4" />
           <span className="font-medium">Export</span>
         </button>
